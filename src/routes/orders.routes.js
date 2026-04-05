@@ -1,6 +1,7 @@
 const express = require('express');
 
 const Order = require('../models/order.model');
+const UpiTransaction = require('../models/upiTransaction.model');
 const { requireAuth, requireAdmin } = require('../middleware/auth.middleware');
 const { genOrderId } = require('../utils/ids');
 
@@ -23,6 +24,36 @@ router.post('/', requireAuth, async (req, res) => {
     const orderId = genOrderId();
     const expectedBy = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN');
 
+    let paymentStatus = 'Pending';
+    let paymentData = {};
+
+    switch (opts.paymentMethod) {
+      case 'Razorpay':
+        if (opts.razorpayOrderId && opts.razorpayPaymentId) {
+          paymentStatus = 'Paid';
+          paymentData = {
+            razorpayOrderId: opts.razorpayOrderId,
+            razorpayPaymentId: opts.razorpayPaymentId,
+            razorpaySignature: opts.razorpaySignature || ''
+          };
+        }
+        break;
+      case 'COD':
+        paymentStatus = 'Pending';
+        break;
+      case 'Bank Transfer':
+        if (opts.utrNumber) {
+          const marked = await UpiTransaction.markAsUsed(opts.utrNumber, orderId);
+          if (marked) {
+            paymentStatus = 'Paid';
+            paymentData = { utrNumber: opts.utrNumber };
+          }
+        }
+        break;
+      default:
+        paymentStatus = 'Pending';
+    }
+
     const order = await Order.create({
       id: orderId,
       userEmail: opts.userEmail,
@@ -30,6 +61,8 @@ router.post('/', requireAuth, async (req, res) => {
       userPhone: opts.userPhone,
       address: opts.address,
       pincode: opts.pincode,
+      city: opts.city || '',
+      state: opts.state || '',
       items: cartItems.map((i) => ({
         productId: i.productId || '',
         name: i.name,
@@ -45,17 +78,19 @@ router.post('/', requireAuth, async (req, res) => {
       shipping,
       total,
       deliveryStatus: 'Pending',
-      paymentStatus: 'Paid',
+      paymentStatus,
       paymentMethod: opts.paymentMethod || 'Online',
+      paymentData,
       placedAt: new Date(),
       updatedAt: new Date(),
       expectedBy,
       deliveredAt: null,
-      notes: ''
+      notes: opts.notes || ''
     });
 
-    return res.json({ ok: true, orderId: order.id, order });
+    return res.json({ ok: true, orderId: order.id, order, paymentStatus });
   } catch (e) {
+    console.error('Order placement error:', e);
     return res.status(500).json({ ok: false, error: 'Order placement failed.' });
   }
 });
