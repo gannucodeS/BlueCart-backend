@@ -13,15 +13,19 @@ const otpRoutes = require('./routes/otp.routes');
 const oauthRoutes = require('./routes/oauth.routes');
 const healthRoutes = require('./routes/health.routes');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://bluecart.vercel.app';
 
 function createApp() {
   const app = express();
 
   app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-      ? [FRONTEND_URL, /https:\/\/.*\.vercel\.app$/]
-      : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
+    origin: [
+      FRONTEND_URL,
+      /https:\/\/.*\.vercel\.app$/,
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000'
+    ],
     credentials: true
   }));
   app.use(express.json({ limit: '1mb' }));

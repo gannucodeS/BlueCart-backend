@@ -18,6 +18,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Search endpoint for live suggestions
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.length < 2) return res.json({ products: [], categories: [], brands: [] });
+    
+    const searchRegex = new RegExp(q, 'i');
+    
+    // Search products by name/brand/category
+    const products = await Product.find({
+      $or: [
+        { name: searchRegex },
+        { brand: searchRegex },
+        { category: searchRegex }
+      ]
+    }).select('name category brand price imageUrl').limit(8).lean();
+    
+    // Get matching categories
+    const categories = await Product.distinct('category', { category: searchRegex });
+    
+    // Get matching brands  
+    const brands = await Product.distinct('brand', { brand: searchRegex });
+    
+    return res.json({ products, categories: categories.slice(0, 5), brands: brands.slice(0, 5) });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'Search error' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   const p = await Product.findOne({ id: req.params.id }).lean();
   return res.json(p || null);
