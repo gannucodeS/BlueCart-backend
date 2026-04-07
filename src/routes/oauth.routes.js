@@ -200,11 +200,13 @@ router.get('/google-url', async (req, res) => {
   // Generate a state parameter to verify the response
   const state = 'bluecart_login_' + Date.now();
   
-  // Use response_type=id_token to get the ID token directly
+  // Use response_type=id_token with response_mode=fragment 
+  // This puts the id_token in the URL fragment (#) instead of query params
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   googleAuthUrl.searchParams.set('client_id', clientId);
   googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
   googleAuthUrl.searchParams.set('response_type', 'id_token');
+  googleAuthUrl.searchParams.set('response_mode', 'fragment');
   googleAuthUrl.searchParams.set('scope', 'openid email profile');
   googleAuthUrl.searchParams.set('nonce', Math.random().toString(36).substring(2));
   googleAuthUrl.searchParams.set('state', state);
