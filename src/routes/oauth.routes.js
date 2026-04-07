@@ -187,9 +187,10 @@ router.post('/google-link', requireAuth, async (req, res) => {
 });
 
 router.get('/google-config', async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
   return res.json({
-    configured: !!(FIREBASE_PROJECT_ID && FIREBASE_CLIENT_EMAIL),
-    clientId: process.env.GOOGLE_CLIENT_ID || ''
+    configured: !!clientId,
+    clientId: clientId
   });
 });
 
