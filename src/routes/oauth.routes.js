@@ -187,4 +187,32 @@ router.get('/google-config', async (req, res) => {
   });
 });
 
+// Simple redirect-based Google Sign-In
+router.get('/google-url', async (req, res) => {
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
+  
+  if (!clientId) {
+    return res.json({ ok: false, error: 'Google OAuth not configured' });
+  }
+  
+  const redirectUri = 'https://bluecart-test.vercel.app/login.html';
+  
+  // Generate a state parameter to verify the response
+  const state = 'bluecart_login_' + Date.now();
+  
+  // Use response_type=id_token to get the ID token directly
+  const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  googleAuthUrl.searchParams.set('client_id', clientId);
+  googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
+  googleAuthUrl.searchParams.set('response_type', 'id_token');
+  googleAuthUrl.searchParams.set('scope', 'openid email profile');
+  googleAuthUrl.searchParams.set('nonce', Math.random().toString(36).substring(2));
+  googleAuthUrl.searchParams.set('state', state);
+  
+  return res.json({
+    ok: true,
+    url: googleAuthUrl.toString()
+  });
+});
+
 module.exports = router;
