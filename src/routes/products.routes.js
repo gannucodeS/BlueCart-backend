@@ -73,6 +73,12 @@ router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
   const existing = await Product.findOne({ id }).lean();
   console.log('Existing product images:', existing ? existing.images : 'none');
   console.log('Data images received:', data.images);
+  console.log('Data images type:', typeof data.images);
+  console.log('Data images is array:', Array.isArray(data.images));
+  if (Array.isArray(data.images)) {
+    console.log('Data images length:', data.images.length);
+    console.log('Data images content:', JSON.stringify(data.images));
+  }
   
   // Only use existing images if data.images is not provided (undefined) or if it's a valid non-empty array
   // If data.images is an empty array [], we should save empty to clear old images
@@ -89,6 +95,7 @@ router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
   }
   
   console.log('Final images to save:', imagesToSave);
+  console.log('Final images to save length:', imagesToSave ? imagesToSave.length : 0);
 
     await Product.findOneAndUpdate(
       { id },
