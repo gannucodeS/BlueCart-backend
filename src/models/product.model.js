@@ -26,7 +26,8 @@ const ProductSchema = new mongoose.Schema({
   weight: { type: String, default: '' },
   warranty: { type: String, default: '' },
 
-  imageUrl: { type: String, default: '' },
+  imageUrl: { type: String, default: '' }, // Main image (backward compatible)
+  images: [{ type: String }], // Array of multiple image URLs
   status: { type: String, default: 'active', index: true },
   badge: { type: String, default: '' },
 

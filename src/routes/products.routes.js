@@ -12,6 +12,10 @@ router.get('/', async (req, res) => {
     const q = {};
     if (category) q.category = category;
     const products = await Product.find(q).lean();
+    console.log('GET all products - count:', products.length);
+    if (products.length > 0) {
+      console.log('First product images:', products[0].images);
+    }
     return res.json(products);
   } catch (e) {
     return res.status(500).json({ ok: false, error: 'Server error' });
@@ -49,6 +53,8 @@ router.get('/search', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   const p = await Product.findOne({ id: req.params.id }).lean();
+  console.log('GET product by id:', req.params.id);
+  console.log('Product images from DB:', p ? p.images : 'not found');
   return res.json(p || null);
 });
 
@@ -56,8 +62,17 @@ router.get('/:id', async (req, res) => {
 router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
   try {
     const data = req.body || {};
+    console.log('Saving product - received images:', data.images);
     const id = data.id || genProductId();
     const now = new Date();
+
+    // First, get existing product to preserve images if not provided
+    const existing = await Product.findOne({ id }).lean();
+    console.log('Existing product images:', existing ? existing.images : 'none');
+    
+    const imagesToSave = Array.isArray(data.images) && data.images.length > 0 
+      ? data.images 
+      : (existing ? existing.images : []);
 
     await Product.findOneAndUpdate(
       { id },
@@ -87,18 +102,24 @@ router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
           warranty: data.warranty || '',
 
           imageUrl: data.imageUrl || '',
+          images: imagesToSave,
           status: data.status || 'active',
           badge: data.badge || '',
 
-          createdAt: data.createdAt ? new Date(data.createdAt) : (data.createdAt ? new Date(data.createdAt) : undefined),
+          createdAt: data.createdAt ? new Date(data.createdAt) : (existing ? existing.createdAt : now),
           updatedAt: now
         }
       },
-      { upsert: true }
+      { upsert: true, new: true }
     );
+    
+    // Verify the save
+    const saved = await Product.findOne({ id }).lean();
+    console.log('Saved product images:', saved.images);
 
     return res.json({ ok: true, id });
   } catch (e) {
+    console.error('Save error:', e);
     return res.status(500).json({ ok: false, error: 'Failed to save product.' });
   }
 });
