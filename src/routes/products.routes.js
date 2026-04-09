@@ -55,6 +55,9 @@ router.get('/:id', async (req, res) => {
   const p = await Product.findOne({ id: req.params.id }).lean();
   console.log('GET product by id:', req.params.id);
   console.log('Product images from DB:', p ? p.images : 'not found');
+  if (p && !Array.isArray(p.images)) {
+    p.images = [];
+  }
   return res.json(p || null);
 });
 
@@ -66,13 +69,26 @@ router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
     const id = data.id || genProductId();
     const now = new Date();
 
-    // First, get existing product to preserve images if not provided
-    const existing = await Product.findOne({ id }).lean();
-    console.log('Existing product images:', existing ? existing.images : 'none');
-    
-    const imagesToSave = Array.isArray(data.images) && data.images.length > 0 
-      ? data.images 
-      : (existing ? existing.images : []);
+  // First, get existing product to preserve images if not provided
+  const existing = await Product.findOne({ id }).lean();
+  console.log('Existing product images:', existing ? existing.images : 'none');
+  console.log('Data images received:', data.images);
+  
+  // Only use existing images if data.images is not provided (undefined) or if it's a valid non-empty array
+  // If data.images is an empty array [], we should save empty to clear old images
+  let imagesToSave;
+  if (data.images === undefined) {
+    // Not provided at all - preserve existing
+    imagesToSave = existing ? existing.images : [];
+  } else if (Array.isArray(data.images)) {
+    // Explicitly provided - use it (even if empty)
+    imagesToSave = data.images;
+  } else {
+    // Invalid format - preserve existing
+    imagesToSave = existing ? existing.images : [];
+  }
+  
+  console.log('Final images to save:', imagesToSave);
 
     await Product.findOneAndUpdate(
       { id },
@@ -130,4 +146,3 @@ router.delete('/admin/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 module.exports = router;
-
