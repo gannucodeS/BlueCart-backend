@@ -24,11 +24,17 @@ async function ensureSeed() {
     await Product.insertMany(seedProducts);
   }
   
-  // Run static products migration if needed
+  // Run static products migration to ensure we have enough products
   const allProductsCount = await Product.countDocuments();
-  if (allProductsCount > 0 && allProductsCount < 50) {
+  console.log('Current product count:', allProductsCount);
+  // Run migration if we have fewer than 70 products (ensures we have products for all categories)
+  if (allProductsCount < 70) {
     console.log('Running static products migration...');
-    await migrateStaticProducts();
+    try {
+      await migrateStaticProducts();
+    } catch(e) {
+      console.error('Migration error:', e.message);
+    }
   }
 
   return { ok: true, adminSecretHint: ADMIN_SECRET };
