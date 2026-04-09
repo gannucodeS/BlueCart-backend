@@ -3,6 +3,7 @@ const Product = require('../models/product.model');
 const { hashPassword } = require('../utils/password');
 const { ADMIN_SECRET } = require('../config/constants');
 const seedProducts = require('./seedProducts');
+const migrateStaticProducts = require('./migrateStaticProducts');
 
 async function ensureSeed() {
   const admin = await User.findOne({ role: 'admin' });
@@ -21,6 +22,13 @@ async function ensureSeed() {
   const productCount = await Product.countDocuments();
   if (productCount === 0 && Array.isArray(seedProducts) && seedProducts.length) {
     await Product.insertMany(seedProducts);
+  }
+  
+  // Run static products migration if needed
+  const allProductsCount = await Product.countDocuments();
+  if (allProductsCount > 0 && allProductsCount < 50) {
+    console.log('Running static products migration...');
+    await migrateStaticProducts();
   }
 
   return { ok: true, adminSecretHint: ADMIN_SECRET };
