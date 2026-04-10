@@ -66,7 +66,8 @@ router.post('/admin/save', requireAuth, requireAdmin, async (req, res) => {
   try {
     const data = req.body || {};
     console.log('Saving product - received images:', data.images);
-    const id = data.id || genProductId();
+    // Use category to generate proper ID if no ID provided
+    const id = data.id || genProductId(data.category);
     const now = new Date();
 
   // First, get existing product to preserve images if not provided

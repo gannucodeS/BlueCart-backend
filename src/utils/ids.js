@@ -11,7 +11,11 @@ const categoryAbbr = {
   'Smart Home': 'HOME',
   'Electronics': 'ELEC',
   'Deals': 'DEAL',
-  'New Arrivals': 'NEW'
+  'New Arrivals': 'NEW',
+  'Monitors': 'MON',
+  'Tablets': 'TAB',
+  'Wearables': 'WERA',
+  'Tv': 'TV'
 };
 
 // Counter for generating sequential IDs per category
