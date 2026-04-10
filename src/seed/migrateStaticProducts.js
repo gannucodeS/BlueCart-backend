@@ -69,24 +69,63 @@ async function seedStaticProducts() {
   // Reset counters to start fresh
   resetCounters();
   
+  // Delete existing products first to avoid ID conflicts
+  console.log('Clearing existing products...');
+  await Product.deleteMany({});
+  
   let created = 0;
   let skipped = 0;
   let errors = 0;
   
   for (const p of staticProducts) {
     try {
-      // Check if product already exists by name
-      const existing = await Product.findOne({ name: p.name, category: p.category }).lean();
+      // Generate new category-based ID
+      const id = genProductId(p.category);
       
-      if (existing) {
-        console.log(`Updating: ${p.name} (${p.category}) with new ID`);
-        // Update with new ID
-        await Product.updateOne(
-          { _id: existing._id },
-          { 
-            id: genProductId(p.category),
-            updatedAt: new Date()
-          }
+      const product = new Product({
+        id: id,
+        name: p.name,
+        category: p.category,
+        brand: p.brand,
+        sku: 'BC-' + p.category.toUpperCase().substring(0, 3) + '-' + Math.floor(Math.random() * 10000),
+        stock: Math.floor(Math.random() * 50) + 10,
+        mrp: p.mrp,
+        price: p.price,
+        discount: p.mrp > p.price ? Math.round((1 - p.price/p.mrp)*100) + '%' : '',
+        gst: '18%',
+        description: p.name + ' — premium quality ' + p.category.toLowerCase() + ' product from ' + p.brand + '.',
+        features: ['Brand: ' + p.brand, 'Category: ' + p.category, 'Genuine Product with Warranty'],
+        colors: [],
+        storage: [],
+        display: '',
+        processor: '',
+        battery: '',
+        connectivity: '',
+        weight: '',
+        warranty: '1 Year Manufacturer Warranty',
+        imageUrl: p.img,
+        images: [p.img],
+        status: 'active',
+        badge: p.badge || '',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      
+      await product.save();
+      console.log(`Created: ${p.name} (${id})`);
+      created++;
+    } catch (e) {
+      console.error(`Error creating ${p.name}:`, e.message);
+      errors++;
+    }
+  }
+  
+  console.log('\n=== Migration Complete ===');
+  console.log(`Created: ${created}`);
+  console.log(`Skipped: ${skipped}`);
+  console.log(`Errors: ${errors}`);
+  console.log(`Total: ${staticProducts.length}`);
+}
         );
         created++;
         continue;
