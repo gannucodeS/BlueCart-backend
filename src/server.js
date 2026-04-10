@@ -1,7 +1,6 @@
 require('dotenv').config();
 
 const { connectDb } = require('./config/db');
-const { ensureSeed } = require('./seed/seed');
 const { createApp } = require('./app');
 
 async function start() {
@@ -14,7 +13,6 @@ async function start() {
   }
 
   await connectDb(MONGODB_URI);
-  await ensureSeed();
 
   const app = createApp();
   app.listen(PORT, () => {
