@@ -1,10 +1,10 @@
 module.exports = [
   {
-    id: "PRD-SEED-1000",
+    id: "PRD-SMART-001",
     name: "iPhone 16 Pro Max 256GB",
     category: "Smartphones",
     brand: "Apple",
-    sku: "BC-SMA-1000",
+    sku: "BC-SMA-001",
     stock: 39,
     mrp: 179900,
     price: 129900,
@@ -27,11 +27,11 @@ module.exports = [
     updatedAt: "2026-01-01T00:00:00.000Z"
   },
   {
-    id: "PRD-SEED-1001",
+    id: "PRD-SMART-002",
     name: "iPhone 16 Pro 128GB",
     category: "Smartphones",
     brand: "Apple",
-    sku: "BC-SMA-1001",
+    sku: "BC-SMA-002",
     stock: 108,
     mrp: 149900,
     price: 109900,
@@ -54,11 +54,11 @@ module.exports = [
     updatedAt: "2026-01-01T00:00:00.000Z"
   },
   {
-    id: "PRD-SEED-1002",
+    id: "PRD-SMART-003",
     name: "iPhone 16 Plus 128GB",
     category: "Smartphones",
     brand: "Apple",
-    sku: "BC-SMA-1002",
+    sku: "BC-SMA-003",
     stock: 56,
     mrp: 119900,
     price: 89900,
@@ -81,4 +81,3 @@ module.exports = [
     updatedAt: "2026-01-01T00:00:00.000Z"
   }
 ];
-

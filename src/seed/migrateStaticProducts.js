@@ -1,5 +1,5 @@
 const Product = require('../models/product.model');
-const { genProductId } = require('../utils/ids');
+const { genProductId, resetCounters } = require('../utils/ids');
 
 const staticProducts = [
   // Smartphones
@@ -66,23 +66,34 @@ async function seedStaticProducts() {
   console.log('Starting static products migration...');
   console.log(`Total products to migrate: ${staticProducts.length}`);
   
+  // Reset counters to start fresh
+  resetCounters();
+  
   let created = 0;
   let skipped = 0;
   let errors = 0;
   
   for (const p of staticProducts) {
     try {
-      // Generate unique ID based on name
-      const id = 'PRD-' + p.name.toUpperCase().replace(/[^A-Z0-9]/g, '-').substring(0, 20) + '-' + Date.now();
-      
-      // Check if product already exists
+      // Check if product already exists by name
       const existing = await Product.findOne({ name: p.name, category: p.category }).lean();
       
       if (existing) {
-        console.log(`Skipping: ${p.name} (already exists)`);
-        skipped++;
+        console.log(`Updating: ${p.name} (${p.category}) with new ID`);
+        // Update with new ID
+        await Product.updateOne(
+          { _id: existing._id },
+          { 
+            id: genProductId(p.category),
+            updatedAt: new Date()
+          }
+        );
+        created++;
         continue;
       }
+      
+      // Generate new category-based ID
+      const id = genProductId(p.category);
       
       const product = new Product({
         id: id,
@@ -106,7 +117,7 @@ async function seedStaticProducts() {
         weight: '',
         warranty: '1 Year Manufacturer Warranty',
         imageUrl: p.img,
-        images: [p.img], // Initialize with main image as array
+        images: [p.img],
         status: 'active',
         badge: p.badge || '',
         createdAt: new Date(),
@@ -114,7 +125,7 @@ async function seedStaticProducts() {
       });
       
       await product.save();
-      console.log(`Created: ${p.name} (${p.category})`);
+      console.log(`Created: ${p.name} (${id})`);
       created++;
     } catch (e) {
       console.error(`Error creating ${p.name}:`, e.message);

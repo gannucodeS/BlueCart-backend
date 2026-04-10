@@ -2,6 +2,7 @@ const User = require('../models/user.model');
 const Product = require('../models/product.model');
 const { hashPassword } = require('../utils/password');
 const { ADMIN_SECRET } = require('../config/constants');
+const { resetCounters } = require('../utils/ids');
 const seedProducts = require('./seedProducts');
 const migrateStaticProducts = require('./migrateStaticProducts');
 
@@ -19,22 +20,28 @@ async function ensureSeed() {
     });
   }
 
-  const productCount = await Product.countDocuments();
-  if (productCount === 0 && Array.isArray(seedProducts) && seedProducts.length) {
+  // Reset counters for fresh ID generation
+  resetCounters();
+  
+  // Clear all products to regenerate with new IDs
+  const deletedCount = await Product.deleteMany({});
+  console.log(`Cleared ${deletedCount.deletedCount} products`);
+  
+  // Reset counters again after delete
+  resetCounters();
+  
+  // Insert seed products with new IDs
+  if (Array.isArray(seedProducts) && seedProducts.length) {
     await Product.insertMany(seedProducts);
+    console.log(`Inserted ${seedProducts.length} seed products`);
   }
   
-  // Run static products migration to ensure we have enough products
-  const allProductsCount = await Product.countDocuments();
-  console.log('Current product count:', allProductsCount);
-  // Run migration if we have fewer than 70 products (ensures we have products for all categories)
-  if (allProductsCount < 70) {
-    console.log('Running static products migration...');
-    try {
-      await migrateStaticProducts();
-    } catch(e) {
-      console.error('Migration error:', e.message);
-    }
+  // Run static products migration to add more products
+  console.log('Running static products migration...');
+  try {
+    await migrateStaticProducts();
+  } catch(e) {
+    console.error('Migration error:', e.message);
   }
 
   return { ok: true, adminSecretHint: ADMIN_SECRET };
