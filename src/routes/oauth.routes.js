@@ -195,7 +195,7 @@ router.get('/google-url', async (req, res) => {
     return res.json({ ok: false, error: 'Google OAuth not configured' });
   }
   
-  const redirectUri = 'https://bluecart-test.vercel.app/login';
+  const redirectUri = 'https://bluecart-india.vercel.app/login';
   
   // Generate a state parameter to verify the response
   const state = 'bluecart_login_' + Date.now();
